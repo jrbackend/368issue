@@ -1,0 +1,96 @@
+<?php
+
+namespace App\WhatsApp\Providers;
+
+use InvalidArgumentException;
+
+/**
+ * Creates the WhatsApp provider strategy for a given provider key.
+ *
+ * To support a new WhatsApp API, implement WhatsAppProvider and add it to PROVIDERS.
+ */
+class WhatsAppProviderFactory
+{
+    /**
+     * @var list<class-string<WhatsAppProvider>>
+     */
+    private const array PROVIDERS = [
+        ZApiProvider::class,
+    ];
+
+    /**
+     * Create the provider for the given key using the given credentials.
+     *
+     * @param  array<string, string>  $credentials
+     *
+     * @throws InvalidArgumentException
+     */
+    public function make(string $providerKey, array $credentials): WhatsAppProvider
+    {
+        $providerClass = $this->providerClass($providerKey);
+
+        return new $providerClass($credentials);
+    }
+
+    /**
+     * Determine if a provider with the given key exists.
+     */
+    public function exists(string $providerKey): bool
+    {
+        return in_array($providerKey, $this->keys(), true);
+    }
+
+    /**
+     * Get the keys of all available providers.
+     *
+     * @return list<string>
+     */
+    public function keys(): array
+    {
+        return array_map(fn (string $providerClass) => $providerClass::key(), self::PROVIDERS);
+    }
+
+    /**
+     * Get the label of the given provider.
+     */
+    public function label(string $providerKey): string
+    {
+        return $this->providerClass($providerKey)::label();
+    }
+
+    /**
+     * Get the credential fields of the given provider.
+     *
+     * @return array<string, array{label: string, type: 'text'|'email'|'password', secret: bool, placeholder: string, help: string|null, rules: list<string>}>
+     */
+    public function credentialFields(string $providerKey): array
+    {
+        return $this->providerClass($providerKey)::credentialFields();
+    }
+
+    /**
+     * Read a status webhook sent by the given provider.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function parseStatusWebhook(string $providerKey, array $payload): ?WhatsAppStatusUpdate
+    {
+        return $this->providerClass($providerKey)::parseStatusWebhook($payload);
+    }
+
+    /**
+     * @return class-string<WhatsAppProvider>
+     *
+     * @throws InvalidArgumentException
+     */
+    private function providerClass(string $providerKey): string
+    {
+        foreach (self::PROVIDERS as $providerClass) {
+            if ($providerClass::key() === $providerKey) {
+                return $providerClass;
+            }
+        }
+
+        throw new InvalidArgumentException("Unknown WhatsApp provider [{$providerKey}].");
+    }
+}

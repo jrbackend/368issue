@@ -1,0 +1,180 @@
+<?php
+
+use Stevebauman\Location\Drivers\Cloudflare;
+use Stevebauman\Location\Drivers\GeoPlugin;
+use Stevebauman\Location\Drivers\Ip2locationio;
+use Stevebauman\Location\Drivers\IpApi;
+use Stevebauman\Location\Drivers\IpInfo;
+use Stevebauman\Location\Drivers\MaxMind;
+use Stevebauman\Location\Position;
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Driver
+    |--------------------------------------------------------------------------
+    |
+    | The default driver you would like to use for location retrieval.
+    |
+    | Set LOCATION_DRIVER to "cloudflare" ONLY when the site is served behind
+    | Cloudflare (it trusts the CF-IPCountry header, which anyone can forge
+    | when the site is reachable directly), or "maxmind" for a local database.
+    |
+    */
+
+    'driver' => match (env('LOCATION_DRIVER', 'ipapi')) {
+        'cloudflare' => Cloudflare::class,
+        'maxmind' => MaxMind::class,
+        default => IpApi::class,
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | Driver Fallbacks
+    |--------------------------------------------------------------------------
+    |
+    | The drivers you want to use to retrieve the user's location
+    | if the above selected driver is unavailable.
+    |
+    | These will be called upon in order (first to last).
+    |
+    */
+
+    'fallbacks' => [
+        Ip2locationio::class,
+        IpInfo::class,
+        GeoPlugin::class,
+        MaxMind::class,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Position
+    |--------------------------------------------------------------------------
+    |
+    | Here you may configure the position instance that is created
+    | and returned from the above drivers. The instance you
+    | create must extend the built-in Position class.
+    |
+    */
+
+    'position' => Position::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | HTTP Client Options
+    |--------------------------------------------------------------------------
+    |
+    | Here you may configure the options used by the underlying
+    | Laravel HTTP client. This will be used in drivers that
+    | request info via HTTP requests through API services.
+    |
+    */
+
+    'http' => [
+        'timeout' => 3,
+        'connect_timeout' => 3,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Total Timeout
+    |--------------------------------------------------------------------------
+    |
+    | The seconds a lookup may take across the driver above and all of its
+    | fallbacks. Set to null to instead give each driver its own timeout,
+    | which makes a failing lookup take them all added up.
+    |
+    */
+
+    'total_timeout' => 4,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Localhost Testing
+    |--------------------------------------------------------------------------
+    |
+    | If your running your website locally and want to test different
+    | IP addresses to see location detection, set 'enabled' to true.
+    |
+    | The testing IP address is a Google host in the United-States.
+    |
+    */
+
+    'testing' => [
+        'ip' => '66.102.0.0',
+        'enabled' => env('LOCATION_TESTING', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | MaxMind Configuration
+    |--------------------------------------------------------------------------
+    |
+    | If web service is enabled, you must fill in your user ID and license key.
+    |
+    | If web service is disabled, it will try and retrieve the user's location
+    | from the MaxMind database file located in the local path below.
+    |
+    | The MaxMind database file can be either City (default) or Country (smaller).
+    |
+    | The web "locales" list also sets the name language for the local database.
+    |
+    */
+
+    'maxmind' => [
+        'license_key' => env('MAXMIND_LICENSE_KEY'),
+
+        'web' => [
+            'enabled' => false,
+            'user_id' => env('MAXMIND_USER_ID'),
+            'locales' => ['en'],
+            'options' => ['host' => 'geoip.maxmind.com'],
+        ],
+
+        'storage' => [
+            'disk' => env('MAXMIND_STORAGE_DISK'),
+            'path' => env('MAXMIND_STORAGE_PATH', 'maxmind/GeoLite2-City.mmdb'),
+            'ttl' => env('MAXMIND_STORAGE_TTL', 3600),
+        ],
+
+        'local' => [
+            'type' => 'city',
+            'path' => database_path('maxmind/GeoLite2-City.mmdb'),
+            'url' => sprintf('https://download.maxmind.com/app/geoip_download_by_token?edition_id=GeoLite2-City&license_key=%s&suffix=tar.gz', env('MAXMIND_LICENSE_KEY')),
+        ],
+    ],
+
+    'ip_api' => [
+        'token' => env('IP_API_TOKEN'),
+    ],
+
+    'ipinfo' => [
+        'token' => env('IPINFO_TOKEN'),
+    ],
+
+    'ipdata' => [
+        'token' => env('IPDATA_TOKEN'),
+    ],
+
+    'ip2locationio' => [
+        'token' => env('IP2LOCATIONIO_TOKEN'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Kloudend ~ ipapi.co Configuration
+    |--------------------------------------------------------------------------
+    |
+    | The configuration for the Kloudend driver.
+    |
+    */
+
+    'kloudend' => [
+
+        'token' => env('KLOUDEND_TOKEN'),
+
+    ],
+
+];
